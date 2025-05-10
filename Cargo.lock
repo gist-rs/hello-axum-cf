@@ -55,6 +55,7 @@ dependencies = [
  "pin-project-lite",
  "rustversion",
  "serde",
+ "serde_urlencoded",
  "sync_wrapper",
  "tower",
  "tower-layer",
@@ -234,6 +235,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "console_error_panic_hook",
+ "serde",
  "tower-service",
  "worker",
  "worker-macros",

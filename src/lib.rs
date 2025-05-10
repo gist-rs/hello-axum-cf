@@ -1,9 +1,16 @@
 use axum::{routing::get, Router};
+use axum::extract::Query;
 use tower_service::Service;
 use worker::*;
+use serde::Deserialize;
 
 fn router() -> Router {
     Router::new().route("/", get(root))
+}
+
+#[derive(Deserialize)]
+struct WalletQuery {
+    wallet_address: String,
 }
 
 #[event(fetch)]
@@ -16,6 +23,6 @@ async fn fetch(
     Ok(router().call(req).await?)
 }
 
-pub async fn root() -> &'static str {
-    "Hello Axum! Yeah!"
+pub async fn root(Query(params): Query<WalletQuery>) -> String {
+    format!("Hello Axum! Wallet Address: {}", params.wallet_address)
 }
