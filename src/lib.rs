@@ -17,5 +17,5 @@ async fn fetch(
 }
 
 pub async fn root() -> &'static str {
-    "Hello Axum!"
+    "Hello Axum! Yeah!"
 }
