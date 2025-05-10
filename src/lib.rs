@@ -1,41 +1,24 @@
 mod solana;
-use axum::extract::Query;
-use axum::http::StatusCode;
-use axum::{routing::get, Router};
-use axum_macros::debug_handler;
+
 use currency_rs::CurrencyOpts;
 use rand::Rng;
-use serde::Deserialize;
-use tower_service::Service;
 use worker::*;
 
-fn router() -> Router {
-    Router::new().route("/", get(root))
-}
+async fn handle_balance_request(req: Request, _ctx: RouteContext<()>) -> Result<Response> {
+    // Extract wallet_address from query parameters
+    let url = req.url()?;
+    let mut wallet_address_opt: Option<String> = None;
+    for (key, value) in url.query_pairs() {
+        if key == "wallet_address" {
+            wallet_address_opt = Some(value.into_owned());
+            break;
+        }
+    }
 
-#[derive(Deserialize)]
-pub struct WalletQuery {
-    wallet_address: Option<String>,
-}
-
-#[event(fetch)]
-async fn fetch(
-    req: HttpRequest,
-    _env: Env,
-    _ctx: Context,
-) -> Result<axum::http::Response<axum::body::Body>> {
-    console_error_panic_hook::set_once();
-    Ok(router().call(req).await?)
-}
-
-#[debug_handler]
-pub async fn root(
-    Query(params): Query<WalletQuery>,
-) -> std::result::Result<String, (StatusCode, String)> {
-    match params.wallet_address {
+    match wallet_address_opt {
         Some(wallet_address) => {
             let options = solana::GetBalanceOptions {
-                rpc_url: "https://rpc.ankr.com/solana",
+                rpc_url: "https://api.mainnet-beta.solana.com",
                 id: rand::thread_rng().gen_range(0u32..u32::MAX),
                 currency_opts: Some(
                     CurrencyOpts::new()
@@ -45,20 +28,42 @@ pub async fn root(
                         .set_decimal("."),
                 ),
             };
-            solana::get_balance(wallet_address.to_string(), options)
-                .await
-                .map_err(|e| {
-                    eprintln!("Error fetching balance: {}", e);
-                    (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        format!("Failed to get balance: {}", e),
-                    )
-                })
-                .map(|balance| format!("Balance for {}: {}", wallet_address, balance.ui_lamports))
+
+            // solana::get_balance returns anyhow::Result<solana::UiBalance>
+            // We need to map this to worker::Result<worker::Response>
+            match solana::get_balance(wallet_address.clone(), options).await {
+                Ok(balance_info) => {
+                    let response_string = format!(
+                        "Balance for {}: {}",
+                        wallet_address, balance_info.ui_lamports
+                    );
+                    Response::ok(response_string)
+                }
+                Err(e) => {
+                    console_error!(
+                        "Error fetching balance from Solana for wallet {}: {}",
+                        wallet_address,
+                        e.to_string()
+                    );
+                    // Return a user-friendly error response
+                    Response::error(format!("Failed to get balance: {}", e.to_string()), 500)
+                }
+            }
         }
-        None => Ok(
-            "Please provide a wallet_address query parameter, e.g., /?wallet_address=YOUR_ADDRESS"
-                .to_string(),
-        )
+        None => Response::ok(
+            "Please provide a wallet_address query parameter, e.g., /?wallet_address=YOUR_ADDRESS",
+        ),
     }
+}
+
+#[event(fetch)]
+pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
+    // Set up panic hook for better error messages in Cloudflare console
+
+    let router = Router::new();
+
+    router
+        .get_async("/", handle_balance_request)
+        .run(req, env)
+        .await
 }
