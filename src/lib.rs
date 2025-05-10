@@ -1,15 +1,15 @@
-use axum::{routing::get, Router};
 use axum::extract::Query;
+use axum::{routing::get, Router};
+use serde::Deserialize;
 use tower_service::Service;
 use worker::*;
-use serde::Deserialize;
 
 fn router() -> Router {
     Router::new().route("/", get(root))
 }
 
 #[derive(Deserialize)]
-struct WalletQuery {
+pub struct WalletQuery {
     wallet_address: String,
 }
 
