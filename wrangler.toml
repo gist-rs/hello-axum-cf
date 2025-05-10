@@ -1,0 +1,6 @@
+name = "hello-axum-cf"
+main = "build/worker/shim.mjs"
+compatibility_date = "2025-05-10"
+
+[build]
+command = "cargo install -q worker-build && worker-build --release"
