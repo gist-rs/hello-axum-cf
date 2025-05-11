@@ -2,7 +2,14 @@ mod solana;
 
 use currency_rs::CurrencyOpts;
 use rand::Rng;
+use serde::Serialize;
 use worker::*;
+
+#[derive(Serialize)]
+struct BalanceResponse {
+    wallet_address: String,
+    balance: String,
+}
 
 async fn handle_balance_request(req: Request, _ctx: RouteContext<()>) -> Result<Response> {
     // Extract wallet_address from query parameters
@@ -33,11 +40,11 @@ async fn handle_balance_request(req: Request, _ctx: RouteContext<()>) -> Result<
             // We need to map this to worker::Result<worker::Response>
             match solana::get_balance(wallet_address.clone(), options).await {
                 Ok(balance_info) => {
-                    let response_string = format!(
-                        "Balance for {}: {}",
-                        wallet_address, balance_info.ui_lamports
-                    );
-                    Response::ok(response_string)
+                    let response_data = BalanceResponse {
+                        wallet_address,
+                        balance: balance_info.ui_lamports,
+                    };
+                    Response::from_json(&response_data)
                 }
                 Err(e) => {
                     console_error!(
