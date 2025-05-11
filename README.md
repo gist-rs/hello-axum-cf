@@ -1,13 +1,13 @@
 # hello-world-cloudflare
 
 ## Setup (once)
-```
+```shell
 rustup target add wasm32-unknown-unknown
 cargo install cargo-generate
 ```
 
-## Setup new project
-```
+## Setup new project (optional)
+```shell
 # From template
 cargo generate cloudflare/workers-rs
 
@@ -15,22 +15,29 @@ cargo generate cloudflare/workers-rs
 npx wrangler init
 ```
 
-## Run
+## Or from existing source
+```shell
+git clone https://github.com/gist-rs/hello-world-cloudflare
+cd hello-world-cloudflare
 ```
+
+## Run
+```shell
 npx wrangler dev
 ```
 
 ## Deploy
-```
+```shell
+npx wrangler login
 npx wrangler deploy
 ```
 
 ## Build and Deploy on Cloudflare
-```
+```shell
 npx wrangler deploy -e production
 ```
 
 ## Try
-```
+```shell
 http://localhost:8787/?wallet_address=gistmeAhMG7AcKSPCHis8JikGmKT9tRRyZpyMLNNULq
 ```
