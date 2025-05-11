@@ -20,6 +20,16 @@ npx wrangler init
 npx wrangler dev
 ```
 
+## Deploy
+```
+npx wrangler deploy
+```
+
+## Build and Deploy on Cloudflare
+```
+npx wrangler deploy -e production
+```
+
 ## Try
 ```
 http://localhost:8787/?wallet_address=gistmeAhMG7AcKSPCHis8JikGmKT9tRRyZpyMLNNULq
