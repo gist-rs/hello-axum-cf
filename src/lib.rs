@@ -46,7 +46,7 @@ async fn handle_balance_request(req: Request, _ctx: RouteContext<()>) -> Result<
                         e.to_string()
                     );
                     // Return a user-friendly error response
-                    Response::error(format!("Failed to get balance: {}", e.to_string()), 500)
+                    Response::error(format!("Failed to get balance: {}", e), 500)
                 }
             }
         }
