@@ -56,10 +56,13 @@ async fn handle_balance_request(req: Request, _ctx: RouteContext<()>) -> Result<
     }
 }
 
+#[event(start)]
+pub fn start() {
+    console_error_panic_hook::set_once();
+}
+
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
-    // Set up panic hook for better error messages in Cloudflare console
-
     let router = Router::new();
 
     router
