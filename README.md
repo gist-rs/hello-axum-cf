@@ -39,5 +39,5 @@ npx wrangler deploy -e production
 
 ## Try
 ```shell
-http://localhost:8787/?wallet_address=gistmeAhMG7AcKSPCHis8JikGmKT9tRRyZpyMLNNULq
+http://localhost:8787
 ```

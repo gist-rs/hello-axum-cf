@@ -1,4 +1,4 @@
-name = "hello-world-cloudflare"
+name = "mcp-memory"
 main = "build/worker/shim.mjs"
 compatibility_date = "2025-05-10"
 
@@ -17,3 +17,13 @@ command = "curl https://sh.rustup.rs -sSf | sh -s -- -y && . $HOME/.cargo/env &&
 [env.dev]
 # For example, if you wanted dev to have a different compatibility date or main entry point.
 # If [env.dev.build] is not specified, it will inherit from the top-level [build].
+
+# Durable Object binding
+[[durable_objects.bindings]]
+name = "KG_DO"             # This MUST match env.get_durable_object("KG_DO") in lib.rs
+class_name = "KnowledgeGraphDO" # This MUST match the #[durable_object] struct name
+
+# Migration for the Durable Object class (required)
+[[migrations]]
+tag = "v1" # A unique tag for this migration
+new_classes = ["KnowledgeGraphDO"] # List of new DO classes being introduced
