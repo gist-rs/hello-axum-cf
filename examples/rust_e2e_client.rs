@@ -218,6 +218,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     eprintln!("Error getting full state: {} - {}", resp.status(), resp.text().await?);
     // }
 
+    // --- Pre-Step 5: Ensure entities to be created in Step 5 do not exist ---
+    println!("\n--- Pre-Step 5: Deleting entities if they exist (blogpost_123, tag_rust, tag_async) ---");
+    let entities_to_delete_names = vec!["blogpost_123".to_string(), "tag_rust".to_string(), "tag_async".to_string()];
+    let delete_payload_for_step_5 = json!({ "entityNames": entities_to_delete_names });
+
+    let resp_delete_pre_step_5 = client
+        .post(format!("{}/graph/entities/delete", BASE_URL))
+        .json(&delete_payload_for_step_5)
+        .send()
+        .await?;
+
+    if !resp_delete_pre_step_5.status().is_success() {
+        eprintln!(
+            "Pre-Step 5: Failed to delete entities. Status: {}. Response: {}",
+            resp_delete_pre_step_5.status(),
+            resp_delete_pre_step_5.text().await?
+        );
+        // Decide if this should be a fatal error for the test
+    } else {
+        let deleted_ids_pre_step_5: Vec<String> = resp_delete_pre_step_5.json().await?;
+        println!("Pre-Step 5: Successfully called delete for entities. Deleted IDs reported: {:?}", deleted_ids_pre_step_5);
+    }
+
+
     // --- Step 5: Batch Create New Entities ( BlogPost and Tag ) ---
     println!("\n--- Step 5: Batch Create BlogPost and Tag Nodes ---");
     let entities_payload = json!({

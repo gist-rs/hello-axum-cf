@@ -14,6 +14,10 @@ wasm-opt = false
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = ["mcp"]  # Make "mcp" a default feature
+mcp = []           # Define the "mcp" feature
+
 [dependencies]
 worker = { version="0.5.0", features=['http'] }
 worker-macros = { version="0.5.0", features=['http'] }
@@ -25,20 +29,26 @@ rand = { version = "0.8", default-features = false } # Ensure wasm-bindgen featu
 anyhow = "1.0"
 getrandom = { version = "0.2", features = ["js"] } # Ensure "js" feature for Wasm
 serde_json = "1.0.140"
-chrono = "0.4.41" # Used by previous versions, might be removable if not used by generic DO
-md5 = "0.7.0" # Used by previous versions, might be removable if not used by generic DO
-uuid = { version = "1.16.0", features = ["v4", "js"] } # Enable "js" feature for Wasm compatibility
+chrono = "0.4.41" 
+md5 = "0.7.0" 
+uuid = { version = "1.16.0", features = ["v4", "js"] } 
 cfg-if = "1.0.0"
-wasm-bindgen = "0.2.100" # Check if direct dependency is needed or if it's transitive.
-wasm-bindgen-futures = "0.4.50" # Check if direct dependency is needed.
-async-trait = "0.1.88" # Check if direct dependency is needed.
+wasm-bindgen = "0.2.100" 
+wasm-bindgen-futures = "0.4.50" 
+async-trait = "0.1.88" 
+serde-wasm-bindgen = "0.6.5"
 
 
 [dev-dependencies]
-reqwest = { version = "0.12", features = ["json"] } # For the e2e client example
-tokio = { version = "1", features = ["full"] }    # For the e2e client example
+reqwest = { version = "0.12", features = ["json"] } 
+tokio = { version = "1", features = ["full"] }    
 
 [[example]]
 name = "rust_e2e_client"
 path = "examples/rust_e2e_client.rs"
-required-features = [] # No special features needed from the library itself to run this example
+required-features = [] 
+
+[[example]]
+name = "mcp_e2e_client"
+path = "examples/mcp_e2e_client.rs"
+required-features = [] # Assuming "mcp" feature is default and thus not required here for example to run
