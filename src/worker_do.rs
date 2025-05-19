@@ -140,6 +140,21 @@ impl DurableObject for KnowledgeGraphDO {
                                                            // Explicitly specify the error type for the Result passed to handle_result!
                 handle_result!(Ok::<Node, worker::Error>(node_to_add), success_status_code: 201)
             }
+            (Method::Get, ["", "nodes"]) => {
+                let url = req.url()?;
+                let query_params: std::collections::HashMap<String, String> =
+                    url.query_pairs().into_owned().collect();
+
+                if let Some(type_filter) = query_params.get("type") {
+                    let nodes = graph_state.find_nodes_by_type(type_filter);
+                    // find_nodes_by_type returns Vec<&Node>, which is serializable
+                    Response::from_json(&nodes)
+                } else {
+                    // Return all nodes if no type filter
+                    let all_nodes: Vec<&Node> = graph_state.nodes.values().collect();
+                    Response::from_json(&all_nodes)
+                }
+            }
             (Method::Get, ["", "nodes", node_id]) => {
                 match graph_state.get_node(node_id) {
                     Some(node) => {

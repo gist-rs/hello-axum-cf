@@ -490,5 +490,139 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("\n--- E2E Test Suite for new APIs Completed ---");
 
+    // --- Step 14: Test GET /nodes?type=... ---
+    println!("\n--- Step 14: Test GET /nodes?type=... ---");
+
+    let filter_test_type = "FilterTestType";
+    let other_type_for_filter = "OtherTypeForFilter";
+
+    // Create nodes for the filter test
+    let node_filter_1_payload = json!({
+        "type": filter_test_type,
+        "data": { "name": "FilterNode1" }
+    });
+    let node_filter_2_payload = json!({
+        "type": filter_test_type,
+        "data": { "name": "FilterNode2" }
+    });
+    let node_other_payload = json!({
+        "type": other_type_for_filter,
+        "data": { "name": "OtherNodeForFilter" }
+    });
+
+    let mut created_node_ids_for_filter_test: Vec<String> = Vec::new();
+
+    for (i, payload) in [node_filter_1_payload, node_filter_2_payload, node_other_payload].iter().enumerate() {
+        let resp_create = client
+            .post(format!("{}/nodes", BASE_URL))
+            .json(payload)
+            .send()
+            .await?;
+        if !resp_create.status().is_success() {
+            eprintln!(
+                "Step 14: Failed to create test node {}. Status: {}. Response: {}",
+                i + 1,
+                resp_create.status(),
+                resp_create.text().await?
+            );
+            // Potentially return error or skip further assertions for this step
+            continue;
+        }
+        let node_resp: NodeResponse = resp_create.json().await?;
+        println!("Step 14: Created test node: {:?}", node_resp);
+        created_node_ids_for_filter_test.push(node_resp.id.clone());
+    }
+    
+    assert_eq!(created_node_ids_for_filter_test.len(), 3, "Step 14: Expected 3 nodes to be created for filter test");
+
+    // Call GET /nodes?type=FilterTestType
+    println!("\nStep 14: Querying GET /nodes?type={}", filter_test_type);
+    let filter_query_url = format!("{}/nodes?type={}", BASE_URL, filter_test_type);
+    let resp_filter = client.get(&filter_query_url).send().await?;
+
+    if !resp_filter.status().is_success() {
+        eprintln!(
+            "Step 14: Failed to query nodes by type. Status: {}. Response: {}",
+            resp_filter.status(),
+            resp_filter.text().await?
+        );
+    } else {
+        let filtered_nodes: Vec<NodeResponse> = resp_filter.json().await?;
+        println!("Step 14: Filtered Nodes ({}) response: {:?}", filter_test_type, filtered_nodes);
+        assert_eq!(filtered_nodes.len(), 2, "Step 14: Expected 2 nodes of type {}", filter_test_type);
+        for node in filtered_nodes {
+            assert_eq!(node.node_type, filter_test_type, "Step 14: Node type mismatch in filtered results");
+            // Ensure the IDs match two of the created nodes (order might vary)
+            assert!(created_node_ids_for_filter_test.contains(&node.id));
+        }
+        println!("Step 14: Successfully verified GET /nodes?type={} endpoint.", filter_test_type);
+    }
+    
+    // Call GET /nodes (all nodes)
+    println!("\nStep 14: Querying GET /nodes (all nodes)");
+    let all_nodes_query_url = format!("{}/nodes", BASE_URL);
+    let resp_all_nodes = client.get(&all_nodes_query_url).send().await?;
+
+    if !resp_all_nodes.status().is_success() {
+        eprintln!(
+            "Step 14: Failed to query all nodes. Status: {}. Response: {}",
+            resp_all_nodes.status(),
+            resp_all_nodes.text().await?
+        );
+    } else {
+        let all_nodes_result: Vec<NodeResponse> = resp_all_nodes.json().await?;
+        println!("Step 14: All nodes response count: {}", all_nodes_result.len());
+        // We created 3 nodes in this test. The total number of nodes should be at least 3
+        // plus whatever existed from previous steps (user_node, wallet_node, blog_post_node)
+        // So, we expect at least 3 + 3 = 6 if this is run after a full test.
+        // For simplicity, we'll assert that it found our specific test nodes.
+        let mut found_filter_node_1 = false;
+        let mut found_filter_node_2 = false;
+        let mut found_other_node = false;
+        for node in &all_nodes_result {
+            if node.id == created_node_ids_for_filter_test[0] { found_filter_node_1 = true; }
+            if node.id == created_node_ids_for_filter_test[1] { found_filter_node_2 = true; }
+            if node.id == created_node_ids_for_filter_test[2] { found_other_node = true; }
+        }
+        assert!(found_filter_node_1, "Step 14: Did not find FilterNode1 in all nodes list");
+        assert!(found_filter_node_2, "Step 14: Did not find FilterNode2 in all nodes list");
+        assert!(found_other_node, "Step 14: Did not find OtherNodeForFilter in all nodes list");
+        println!("Step 14: Successfully verified GET /nodes endpoint returns all nodes (including test nodes).");
+    }
+
+
+    // Cleanup nodes created for this specific test step
+    if !created_node_ids_for_filter_test.is_empty() {
+        println!("\nStep 14: Cleaning up test nodes for GET /nodes?type=... test");
+        // The /nodes endpoint doesn't take IDs. We need to use /graph/entities/delete with names.
+        // For this test, we used generic data, not specific names as IDs.
+        // To properly clean up, the nodes should have been created via /graph/entities
+        // or the client needs to get their names from the NodeResponse.
+        // Assuming the IDs are the names for now for cleanup simplicity, if they were created via /graph/entities
+        // Since they were created via POST /nodes, their IDs are UUIDs.
+        // A direct DELETE /nodes/{id} would be better here.
+        // For now, as a quick fix and demonstration, we'll call DELETE /nodes/{id} for each.
+
+        for node_id_to_delete in created_node_ids_for_filter_test {
+             let resp_delete_cleanup = client
+                .delete(format!("{}/nodes/{}", BASE_URL, node_id_to_delete))
+                .send()
+                .await?;
+            if !resp_delete_cleanup.status().is_success() {
+                eprintln!(
+                    "Step 14 Cleanup: Failed to delete node {}. Status: {}. Response: {}",
+                    node_id_to_delete,
+                    resp_delete_cleanup.status(),
+                    resp_delete_cleanup.text().await?
+                );
+            } else {
+                 println!("Step 14 Cleanup: Successfully deleted node {}", node_id_to_delete);
+            }
+        }
+    }
+    
+    println!("\n--- Full E2E Test Suite Completed ---");
+
+
     Ok(())
 }

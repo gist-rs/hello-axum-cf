@@ -324,7 +324,7 @@ impl KnowledgeGraphState {
                         let original_len = obs_array.len();
                         obs_array.retain(|obs_val| {
                             !item.observations.iter().any(|obs_to_delete_str| {
-                                obs_val.as_str().map_or(false, |s| s == obs_to_delete_str)
+                                obs_val.as_str().is_some_and(|s| s == obs_to_delete_str)
                             })
                         });
                         if obs_array.len() < original_len {
@@ -399,7 +399,7 @@ impl KnowledgeGraphState {
                     .filter_map(|val| val.as_str().map(String::from))
                     .collect()
             })
-            .unwrap_or_else(Vec::new);
+            .unwrap_or_default();
 
         let mut other_data = node.data.clone();
         if let Some(obj) = other_data.as_object_mut() {

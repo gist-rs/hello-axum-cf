@@ -43,7 +43,7 @@ struct McpCreateEntitiesArgs {
     entities: Vec<McpEntityToCreate>,
 }
 
-// --- Structs for `delete_entities` Tool (Client-Side) ---
+// --- Structs for `delete_entities` Tool (Client-Side) ---\n
 #[derive(Serialize, Debug)]
 struct McpDeleteEntitiesArgs {
     #[serde(rename = "entityNames")]
@@ -72,9 +72,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         MCP_BASE_URL
     );
 
-    // --- Pre-Step: Delete entities if they exist to ensure clean state for create ---
+    // --- Pre-Step: Delete entities if they exist to ensure clean state for create ---\n
     println!("\n--- MCP: Pre-Step - Call `delete_entities` Tool ---");
-    let entities_to_delete_names = vec!["mcp_blogpost_789".to_string(), "mcp_tag_ai".to_string()];
+    let entities_to_delete_names =
+        vec!["mcp_blogpost_789".to_string(), "mcp_tag_ai".to_string()];
     let delete_entities_payload = McpDeleteEntitiesArgs {
         entity_names: entities_to_delete_names.clone(),
     };
