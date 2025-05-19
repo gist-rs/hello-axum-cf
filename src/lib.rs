@@ -27,12 +27,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 "mcp-memory worker is running. Use /do/... to interact with the KnowledgeGraphDO.",
             )
         })
-        .on_async("/do/:path", |worker_req, route_ctx| async move {
-            console_log!(
-                "[WORKER LIB /do/:path] Entered handler for worker_req path: {}",
-                worker_req.path()
-            );
-
+        .on_async("/do/*path", |worker_req, route_ctx| async move {
             let env = route_ctx.env.clone();
             let durable_object_binding_name = "KNOWLEDGE_GRAPH_DO";
 
@@ -43,7 +38,6 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     return Response::error(format!("Error getting DO namespace: {}", e), 500);
                 }
             };
-            console_log!("[WORKER LIB /do/:path] Got DO namespace.");
 
             let do_id_name = "default_knowledge_graph";
             let id = match namespace.id_from_name(do_id_name) {
@@ -56,7 +50,6 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     return Response::error(format!("Error getting DO ID from name: {}", e), 500);
                 }
             };
-            console_log!("[WORKER LIB /do/:path] Got DO ID from name.");
 
             let stub = match id.get_stub() {
                 Ok(s) => s,
@@ -65,29 +58,34 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     return Response::error(format!("Error getting DO stub: {}", e), 500);
                 }
             };
-            console_log!("[WORKER LIB /do/:path] Got DO stub.");
 
             let path_param = match route_ctx.param("path") {
                 Some(p) => p.to_string(),
-                None => {
-                    console_log!(
-                        "[WORKER LIB /do/:path] 'path' param is None, defaulting to empty string."
-                    );
-                    String::new()
-                }
+                None => String::new(),
             };
-            console_log!("[WORKER LIB /do/:path] path_param: '{}'", path_param);
 
-            let do_internal_path = format!("/{}", path_param);
-            // Use a dummy base URL as required by the Request constructor for stubs
-            // The actual hostname doesn't matter as it's not used for routing to the DO.
+            // path_param is the raw path segment from the router (e.g., "nodes/123/related" from an incoming URL like /do/nodes/123/related?k=v).
+            // We need to construct the DO's internal request path by prepending "/" and potentially appending the original query string.
+            let mut internal_path_for_do = format!("/{}", path_param);
+
+            // Try to get the original query string from worker_req and append it.
+            if let Ok(url_obj) = worker_req.url() {
+                // Safely access the Url object from the original request
+                if let Some(query_str) = url_obj.query() {
+                    // Get the query string part (e.g., "k=v")
+                    if !query_str.is_empty() {
+                        internal_path_for_do.push('?');
+                        internal_path_for_do.push_str(query_str); // Append "?<query_string>"
+                    }
+                }
+            }
+            // If worker_req.url() fails or there's no query string, internal_path_for_do remains /<path_param>.
+
+            let do_internal_path = internal_path_for_do; // Use this complete path for the DO request.
+                                                         // Use a dummy base URL as required by the Request constructor for stubs
+                                                         // The actual hostname doesn't matter as it's not used for routing to the DO.
+                                                         // do_internal_path now includes the original query string, if present.
             let full_do_url = format!("https://durable-object.internal-url{}", do_internal_path);
-
-            // console_log!(
-            //     "Worker forwarding request: {} to DO with path: {}",
-            //     worker_req.url()?.path(),
-            //     do_request_path
-            // );
 
             // Construct a new request to send to the Durable Object.
             // We forward the method. Body handling is important for POST/PUT.
@@ -111,12 +109,6 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
             // For GET, DELETE, OPTIONS, HEAD etc., do not set a body.
             // RequestInit::new() defaults to `body: None`.
-
-            // Construct the request with the full dummy URL
-            console_log!(
-                "[WORKER LIB] Attempting to create DO request with URL: '{}'",
-                full_do_url
-            );
             let do_req = Request::new_with_init(&full_do_url, &do_req_init)?;
 
             // Send the request to the Durable Object instance and return its response.

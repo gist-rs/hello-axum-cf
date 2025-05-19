@@ -3,7 +3,7 @@ use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 use worker::{
     console_error, console_log, durable_object, Env, Headers, Method, Request, Response, Result,
-    State, Storage,
+    State,
 };
 
 // Key for storing the graph state in Durable Object storage
@@ -482,7 +482,7 @@ impl KnowledgeGraphState {
                     .filter_map(|jv| jv.as_str().map(String::from))
                     .collect()
             })
-            .unwrap_or_else(Vec::new);
+            .unwrap_or_default();
 
         ApiEntity {
             name: node.id.clone(),
@@ -668,7 +668,7 @@ impl DurableObject for KnowledgeGraphDO {
             // --- Debug Route ---
             (Method::Get, ["hello"]) => {
                 console_log!("[DO FETCH ROUTE] Matched GET /hello");
-                return Response::ok("Hello, world from KnowledgeGraphDO!");
+                Response::ok("Hello, world from KnowledgeGraphDO!")
             }
             // --- Node Operations ---
             (Method::Post, ["nodes"]) => {
@@ -695,7 +695,7 @@ impl DurableObject for KnowledgeGraphDO {
                 console_log!("[DO FETCH SUCCESS] POST /nodes - Node created: {}", node_id);
                 Response::from_json(&node)
             }
-            (Method::Get, ["nodes", node_id]) => match graph_state.get_node(*node_id) {
+            (Method::Get, ["nodes", node_id]) => match graph_state.get_node(node_id) {
                 // Dereferenced node_id
                 Some(node) => Response::from_json(node),
                 None => Response::error("Node not found", 404),
@@ -733,7 +733,7 @@ impl DurableObject for KnowledgeGraphDO {
                 }
             }
             (Method::Delete, ["nodes", node_id]) => {
-                if graph_state.delete_node_and_connected_edges(*node_id) {
+                if graph_state.delete_node_and_connected_edges(node_id) {
                     // Dereferenced node_id
                     self.save_graph_state(&graph_state).await?;
                     Response::ok(format!("Node {} and connected edges deleted", *node_id))
@@ -797,7 +797,7 @@ impl DurableObject for KnowledgeGraphDO {
                 self.save_graph_state(&graph_state).await?;
                 Response::from_json(&edge)
             }
-            (Method::Get, ["edges", edge_id]) => match graph_state.get_edge(*edge_id) {
+            (Method::Get, ["edges", edge_id]) => match graph_state.get_edge(edge_id) {
                 // Dereferenced edge_id
                 Some(edge) => Response::from_json(edge),
                 None => Response::error("Edge not found", 404),
@@ -827,7 +827,7 @@ impl DurableObject for KnowledgeGraphDO {
                 }
             }
             (Method::Delete, ["edges", edge_id]) => {
-                if graph_state.remove_edge(*edge_id).is_some() {
+                if graph_state.remove_edge(edge_id).is_some() {
                     // Dereferenced edge_id
                     self.save_graph_state(&graph_state).await?;
                     Response::ok(format!("Edge {} deleted", *edge_id)) // Dereferenced edge_id
@@ -839,7 +839,7 @@ impl DurableObject for KnowledgeGraphDO {
             // --- Relationship Queries ---
             (Method::Get, ["nodes", node_id, "related"]) => {
                 // GET /nodes/{id}/related?edge_type=YourEdgeType&direction={outgoing|incoming|both}
-                if graph_state.get_node(*node_id).is_none() {
+                if graph_state.get_node(node_id).is_none() {
                     // Dereferenced node_id
                     return Response::error("Start node not found", 404);
                 }
@@ -854,7 +854,7 @@ impl DurableObject for KnowledgeGraphDO {
                     .map(|(_, v)| v.into_owned());
 
                 let mut related_nodes = Vec::new();
-                let edges = graph_state.get_edges_for_node(*node_id, direction_filter.as_deref()); // Dereferenced node_id
+                let edges = graph_state.get_edges_for_node(node_id, direction_filter.as_deref()); // Dereferenced node_id
 
                 for edge in edges {
                     if edge_type_filter.is_some()
@@ -895,8 +895,8 @@ impl DurableObject for KnowledgeGraphDO {
                         _ => {}
                     }
                 }
-                related_nodes.sort_by_key(|n| &(**n).id); // Dereferenced n to access id
-                related_nodes.dedup_by_key(|n| (**n).id.clone()); // Dereferenced n to access id
+                related_nodes.sort_by_key(|n| &n.id); // Dereferenced n to access id
+                related_nodes.dedup_by_key(|n| (n).id.clone()); // Dereferenced n to access id
                 Response::from_json(&related_nodes)
             }
 
