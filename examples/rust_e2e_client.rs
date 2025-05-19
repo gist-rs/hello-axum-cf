@@ -1,8 +1,8 @@
-// dokg-memory/examples/rust_e2e_client.rs
+// mcp-memory/examples/rust_e2e_client.rs
 //
 // This is a simple E2E test client for the generic KnowledgeGraphDO.
 // To run this:
-// 1. Ensure your Cloudflare Worker (`dokg-memory`) is running locally,
+// 1. Ensure your Cloudflare Worker (`mcp-memory`) is running locally,
 //    typically via `wrangler dev` (which defaults to http://localhost:8787).
 // 2. You'll need to compile this Rust file. If it were part of a Cargo project,
 //    your Cargo.toml would need:
@@ -12,13 +12,14 @@
 //    serde = { version = "1.0", features = ["derive"] }
 //    serde_json = "1.0"
 //
-//    You can compile and run it as a standalone file (if you have rustc and the crates downloaded):
-//    rustc rust_e2e_client.rs -L /path/to/your/compiled/crates
+//    To compile and run it as a standalone file (ensure rustc is installed and crates are accessible):
+//    rustc rust_e2e_client.rs --edition=2021 -L /path/to/your/compiled/crates # Adjust path as needed
 //    ./rust_e2e_client
-//    A more common way is to create a temporary Cargo project:
+//
+//    Alternatively, create a temporary Cargo project:
 //    cargo new --bin temp_e2e_client
 //    cd temp_e2e_client
-//    # Add dependencies to Cargo.toml
+//    # Add dependencies to Cargo.toml as listed above
 //    # Replace src/main.rs with this file's content
 //    cargo run
 
@@ -112,7 +113,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error creating user node: {} - {}",
+            "Failed to create user node. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -141,7 +142,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error creating wallet node: {} - {}",
+            "Failed to create wallet node. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -171,7 +172,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error creating edge: {} - {}",
+            "Failed to create edge. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -192,7 +193,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error querying related nodes: {} - {}",
+            "Failed to query related nodes. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -249,7 +250,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error batch creating entities: {} - {}",
+            "Failed to batch create entities. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -284,7 +285,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error adding observations: {} - {}",
+            "Failed to add observations. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -310,7 +311,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error batch creating relations: {} - {}",
+            "Failed to batch create relations. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -331,7 +332,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if !resp.status().is_success() {
         eprintln!(
-            "Error searching nodes: {} - {}",
+            "Failed to search nodes. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -355,7 +356,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     if !resp.status().is_success() {
         eprintln!(
-            "Error opening nodes: {} - {}",
+            "Failed to open nodes. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -375,7 +376,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     if !resp.status().is_success() {
         eprintln!(
-            "Error getting full graph state: {} - {}",
+            "Failed to get full graph state. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -402,7 +403,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     if !resp.status().is_success() {
         eprintln!(
-            "Error deleting observations: {} - {}",
+            "Failed to delete observations. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -428,7 +429,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     if !resp.status().is_success() {
         eprintln!(
-            "Error deleting relations: {} - {}",
+            "Failed to delete relations. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );
@@ -451,7 +452,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     if !resp.status().is_success() {
         eprintln!(
-            "Error deleting entities: {} - {}",
+            "Failed to delete entities. Status: {}. Response: {}",
             resp.status(),
             resp.text().await?
         );

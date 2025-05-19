@@ -606,7 +606,6 @@ impl DurableObject for KnowledgeGraphDO {
     fn new(state: State, _env: Env) -> Self {
         Self {
             state,
-            // initialized: false,
         }
     }
 
@@ -643,8 +642,7 @@ impl DurableObject for KnowledgeGraphDO {
         );
 
         // Ensure Date is imported, e.g.: use worker::Date;
-        let now_ms = worker::Date::now().as_millis(); // Changed Date to worker::Date
-        console_log!("[DO FETCH] Current timestamp (ms): {}", now_ms);
+        let now_ms = worker::Date::now().as_millis();
 
         console_log!("[DO FETCH] Attempting to load or initialize graph state...");
         let mut graph_state = match self.load_or_initialize_graph_state().await {
@@ -697,7 +695,6 @@ impl DurableObject for KnowledgeGraphDO {
                 Response::from_json(&node)
             }
             (Method::Get, ["nodes", node_id]) => match graph_state.get_node(node_id) {
-                // Dereferenced node_id
                 Some(node) => Response::from_json(node),
                 None => Response::error("Node not found", 404),
             },
@@ -735,10 +732,8 @@ impl DurableObject for KnowledgeGraphDO {
             }
             (Method::Delete, ["nodes", node_id]) => {
                 if graph_state.delete_node_and_connected_edges(node_id) {
-                    // Dereferenced node_id
                     self.save_graph_state(&graph_state).await?;
                     Response::ok(format!("Node {} and connected edges deleted", *node_id))
-                // Dereferenced node_id
                 } else {
                     Response::error("Node not found", 404)
                 }
@@ -784,8 +779,8 @@ impl DurableObject for KnowledgeGraphDO {
                     );
                 }
 
-                let edge_now_ms = worker::Date::now().as_millis(); // Using worker::Date consistently
-                let edge_id = self.new_id(); // Changed Self::new_id() to self.new_id()
+                let edge_now_ms = worker::Date::now().as_millis();
+                let edge_id = self.new_id();
                 let edge = Edge {
                     id: edge_id.clone(),
                     edge_type: payload.edge_type,
@@ -799,7 +794,6 @@ impl DurableObject for KnowledgeGraphDO {
                 Response::from_json(&edge)
             }
             (Method::Get, ["edges", edge_id]) => match graph_state.get_edge(edge_id) {
-                // Dereferenced edge_id
                 Some(edge) => Response::from_json(edge),
                 None => Response::error("Edge not found", 404),
             },
@@ -829,9 +823,8 @@ impl DurableObject for KnowledgeGraphDO {
             }
             (Method::Delete, ["edges", edge_id]) => {
                 if graph_state.remove_edge(edge_id).is_some() {
-                    // Dereferenced edge_id
                     self.save_graph_state(&graph_state).await?;
-                    Response::ok(format!("Edge {} deleted", *edge_id)) // Dereferenced edge_id
+                    Response::ok(format!("Edge {} deleted", *edge_id))
                 } else {
                     Response::error("Edge not found", 404)
                 }
@@ -841,7 +834,6 @@ impl DurableObject for KnowledgeGraphDO {
             (Method::Get, ["nodes", node_id, "related"]) => {
                 // GET /nodes/{id}/related?edge_type=YourEdgeType&direction={outgoing|incoming|both}
                 if graph_state.get_node(node_id).is_none() {
-                    // Dereferenced node_id
                     return Response::error("Start node not found", 404);
                 }
                 let query = url.query_pairs();
@@ -855,7 +847,7 @@ impl DurableObject for KnowledgeGraphDO {
                     .map(|(_, v)| v.into_owned());
 
                 let mut related_nodes = Vec::new();
-                let edges = graph_state.get_edges_for_node(node_id, direction_filter.as_deref()); // Dereferenced node_id
+                let edges = graph_state.get_edges_for_node(node_id, direction_filter.as_deref());
 
                 for edge in edges {
                     if edge_type_filter.is_some()
@@ -869,25 +861,21 @@ impl DurableObject for KnowledgeGraphDO {
 
                     match direction_filter.as_deref() {
                         Some("outgoing") if edge.source_node_id.as_str() == *node_id => {
-                            // *node_id is &str
                             if let Some(node_obj) = graph_state.get_node(target_node_id_str) {
                                 related_nodes.push(node_obj);
                             }
                         }
                         Some("incoming") if edge.target_node_id.as_str() == *node_id => {
-                            // *node_id is &str
                             if let Some(node_obj) = graph_state.get_node(source_node_id_str) {
                                 related_nodes.push(node_obj);
                             }
                         }
                         Some("both") | None => {
                             if edge.source_node_id.as_str() == *node_id {
-                                // *node_id is &str
                                 if let Some(node_obj) = graph_state.get_node(target_node_id_str) {
                                     related_nodes.push(node_obj);
                                 }
                             } else if edge.target_node_id.as_str() == *node_id {
-                                // *node_id is &str
                                 if let Some(node_obj) = graph_state.get_node(source_node_id_str) {
                                     related_nodes.push(node_obj);
                                 }
@@ -896,8 +884,8 @@ impl DurableObject for KnowledgeGraphDO {
                         _ => {}
                     }
                 }
-                related_nodes.sort_by_key(|n| &n.id); // Dereferenced n to access id
-                related_nodes.dedup_by_key(|n| (n).id.clone()); // Dereferenced n to access id
+                related_nodes.sort_by_key(|n| &n.id);
+                related_nodes.dedup_by_key(|n| (n).id.clone());
                 Response::from_json(&related_nodes)
             }
 

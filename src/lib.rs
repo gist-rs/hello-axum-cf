@@ -15,10 +15,7 @@ pub fn start() {
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
-    // Note: The "hello world" paths have been updated to reflect the generic DO API.
-    // Specific test paths like /test-mock-data or /test-decision-context were removed
-    // when do_memory.rs was made fully generic.
-    // The client (e.g., rust_e2e_client.rs) now handles creating specific types of nodes/edges.
+
     let router = Router::new();
 
     router
@@ -34,7 +31,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             let namespace = match env.durable_object(durable_object_binding_name) {
                 Ok(ns) => ns,
                 Err(e) => {
-                    console_error!("[WORKER LIB /do/:path] Error getting DO namespace: {}", e);
+                    console_error!("Failed to get Durable Object namespace '{}': {}", durable_object_binding_name, e);
                     return Response::error(format!("Error getting DO namespace: {}", e), 500);
                 }
             };
@@ -44,8 +41,8 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Ok(i) => i,
                 Err(e) => {
                     console_error!(
-                        "[WORKER LIB /do/:path] Error getting DO ID from name: {}",
-                        e
+                        "Failed to get Durable Object ID from name '{}' for namespace '{}': {}",
+                        do_id_name, durable_object_binding_name, e
                     );
                     return Response::error(format!("Error getting DO ID from name: {}", e), 500);
                 }
@@ -54,7 +51,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             let stub = match id.get_stub() {
                 Ok(s) => s,
                 Err(e) => {
-                    console_error!("[WORKER LIB /do/:path] Error getting DO stub: {}", e);
+                    console_error!("Failed to get Durable Object stub for ID '{}': {}", id, e);
                     return Response::error(format!("Error getting DO stub: {}", e), 500);
                 }
             };
