@@ -1,4 +1,4 @@
-name = "mcp-memory"
+name = "dokg-memory"
 main = "build/worker/shim.mjs"
 compatibility_date = "2025-05-10"
 

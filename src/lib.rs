@@ -24,7 +24,7 @@ pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     router
         .get_async("/", |_req, _ctx| async move {
             Response::ok(
-                "mcp-memory worker is running. Use /do/... to interact with the KnowledgeGraphDO.",
+                "dokg-memory worker is running. Use /do/... to interact with the KnowledgeGraphDO.",
             )
         })
         .on_async("/do/*path", |worker_req, route_ctx| async move {

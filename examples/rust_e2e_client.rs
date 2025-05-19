@@ -1,8 +1,8 @@
-// mcp-memory/examples/rust_e2e_client.rs
+// dokg-memory/examples/rust_e2e_client.rs
 //
 // This is a simple E2E test client for the generic KnowledgeGraphDO.
 // To run this:
-// 1. Ensure your Cloudflare Worker (`mcp-memory`) is running locally,
+// 1. Ensure your Cloudflare Worker (`dokg-memory`) is running locally,
 //    typically via `wrangler dev` (which defaults to http://localhost:8787).
 // 2. You'll need to compile this Rust file. If it were part of a Cargo project,
 //    your Cargo.toml would need:
@@ -31,7 +31,7 @@ const BASE_URL: &str = "http://localhost:8787/do"; // Adjust if your worker runs
 
 // Simplified structs to deserialize responses from the DO
 // We mainly care about the 'id' for subsequent requests.
-#[derive(Debug, Deserialize, Clone)] // Added Clone
+#[derive(Debug, Serialize, Deserialize, Clone)] // Added Clone
 struct NodeResponse {
     id: String,
     #[serde(rename = "type")]
@@ -41,7 +41,7 @@ struct NodeResponse {
     updated_at_ms: u64,
 }
 
-#[derive(Debug, Deserialize, Clone)] // Added Clone
+#[derive(Debug, Serialize, Deserialize, Clone)] // Added Clone
 struct EdgeResponse {
     id: String,
     #[serde(rename = "type")]
@@ -54,7 +54,7 @@ struct EdgeResponse {
 
 // --- New Structs for Batch/Query API Responses ---
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct ClientApiEntity {
     name: String,
     #[serde(rename = "entityType")]
@@ -62,7 +62,7 @@ struct ClientApiEntity {
     observations: Vec<String>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct ClientApiRelation {
     from: String,
     to: String,
@@ -70,14 +70,14 @@ struct ClientApiRelation {
     relation_type: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct ClientKnowledgeGraphDataResponse {
     entities: Vec<ClientApiEntity>,
     relations: Vec<ClientApiRelation>,
 }
 
 // Generic result type to deserialize {"Ok": T} or {"Err": E}
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
 enum ClientResult<T, E> {
     Ok(T),

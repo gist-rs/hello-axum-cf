@@ -196,9 +196,10 @@ impl KnowledgeGraphState {
         self.nodes.get(node_id)
     }
 
-    fn remove_node(&mut self, node_id: &str) -> Option<Node> {
-        self.nodes.remove(node_id)
-    }
+    // This is unsafe, use delete_node_and_connected_edges
+    // fn remove_node(&mut self, node_id: &str) -> Option<Node> {
+    //     self.nodes.remove(node_id)
+    // }
 
     fn add_edge(&mut self, edge: Edge) {
         self.edges.insert(edge.id.clone(), edge);

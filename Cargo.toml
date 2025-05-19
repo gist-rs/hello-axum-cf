@@ -1,5 +1,5 @@
 [package]
-name = "mcp-memory"
+name = "dokg-memory"
 version = "0.1.0"
 edition = "2021"
 authors = [ "katopz <katopz@gmail.com>" ]
